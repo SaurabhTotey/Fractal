@@ -9,6 +9,9 @@ use vulkano::sync::GpuFuture;
 use vulkano::pipeline::ComputePipeline;
 use vulkano::descriptor::PipelineLayoutAbstract;
 use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
+use vulkano::image::{StorageImage, Dimensions};
+use vulkano::format::Format;
+use image::{Rgba, ImageBuffer};
 
 fn main() {
 	let instance = Instance::new(None, &InstanceExtensions::none(), None).expect("Failed to create instance.");
@@ -22,26 +25,25 @@ fn main() {
 	).expect("Failed to create device.") };
 	let queue = queues.next().unwrap();
 
-	//Should multiply all the data by 12
+	//Should draw the Mandelbrot set to an image
 	mod ComputeShader {
 		vulkano_shaders::shader!{
 	        ty: "compute",
-	        path: "src/ComputeShader.glsl"
+	        path: "src/MandelbrotComputeShader.glsl"
 	    }
 	}
-	let dataToMultiply = 0 .. 65536;
-	let dataBuffer = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, dataToMultiply).expect("Failed to create buffer.");
 	let shader = ComputeShader::Shader::load(device.clone()).expect("Failed to create shader module.");
 	let computePipeline = Arc::new(ComputePipeline::new(device.clone(), &shader.main_entry_point(), &()).expect("Failed to create compute pipeline."));
+	let imageSize = 1024;
+	let image = StorageImage::new(device.clone(), Dimensions::Dim2d { width: imageSize, height: imageSize }, Format::R8G8B8A8Unorm, Some(queue.family())).unwrap();
 	let layout = computePipeline.layout().descriptor_set_layout(0).unwrap();
-	let descriptorSet = Arc::new(PersistentDescriptorSet::start(layout.clone()).add_buffer(dataBuffer.clone()).unwrap().build().unwrap());
+	let descriptorSet = Arc::new(PersistentDescriptorSet::start(layout.clone()).add_image(image.clone()).unwrap().build().unwrap());
+	let buffer = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, (0 .. imageSize * imageSize * 4).map(|_| 0u8)).expect("Failed to create Buffer.");
 	let mut builder = AutoCommandBufferBuilder::new(device.clone(), queue.family()).unwrap();
-	builder.dispatch([1024, 1, 1], computePipeline.clone(), descriptorSet.clone(), ()).unwrap();
+	builder.dispatch([imageSize / 8, imageSize / 8, 1], computePipeline.clone(), descriptorSet.clone(), ()).unwrap().copy_image_to_buffer(image.clone(), buffer.clone()).unwrap();
 	let commandBuffer = builder.build().unwrap();
 	commandBuffer.execute(queue.clone()).unwrap().then_signal_fence_and_flush().unwrap().wait(None).unwrap();
-	let content = dataBuffer.read().unwrap();
-	for (n, val) in content.iter().enumerate() {
-		assert_eq!(*val, n as u32 * 12);
-	}
-	print!("yay");
+	let bufferContent = buffer.read().unwrap();
+	let image = ImageBuffer::<Rgba<u8>, _>::from_raw(imageSize, imageSize, &bufferContent[..]).unwrap();
+	image.save("output/Mandelbrot.png").unwrap();
 }
