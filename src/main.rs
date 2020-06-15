@@ -25,11 +25,11 @@ fn main() {
 	).expect("Failed to create device.") };
 	let queue = queues.next().unwrap();
 
-	//Should draw the Mandelbrot set to an image
+	//Should draw a circle to an image
 	mod ComputeShader {
 		vulkano_shaders::shader!{
 	        ty: "compute",
-	        path: "src/MandelbrotComputeShader.glsl"
+	        path: "src/shaders/CircleComputeShader.glsl"
 	    }
 	}
 	let shader = ComputeShader::Shader::load(device.clone()).expect("Failed to create shader module.");
@@ -45,5 +45,5 @@ fn main() {
 	commandBuffer.execute(queue.clone()).unwrap().then_signal_fence_and_flush().unwrap().wait(None).unwrap();
 	let bufferContent = buffer.read().unwrap();
 	let image = ImageBuffer::<Rgba<u8>, _>::from_raw(imageSize, imageSize, &bufferContent[..]).unwrap();
-	image.save("output/Mandelbrot.png").unwrap();
+	image.save("output/Circle.png").unwrap();
 }
