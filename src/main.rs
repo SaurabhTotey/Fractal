@@ -1,7 +1,6 @@
 #![allow(non_snake_case)]
 
 use std::sync::Arc;
-use rand::Rng;
 use vulkano::instance::{Instance, PhysicalDevice, InstanceExtensions};
 use vulkano::device::{Device, Features, DeviceExtensions};
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
@@ -32,16 +31,22 @@ fn main() {
 	}
 	vulkano::impl_vertex!(Vertex, position);
 
-	let mut rng = rand::thread_rng();
-	let mut generateVertex = || Vertex { position: [rng.gen::<f32>() * 2.0 - 1.0, rng.gen::<f32>() * 2.0 - 1.0] };
-	let vertices: Vec<Vertex> = (0..3).map(|_| generateVertex()).collect();
+	// Vertices correspond to two triangles (one for each half of the screen); both triangles cover entire screen
+	let vertices: Vec<Vertex> = [
+		Vertex { position: [1.0, 1.0] },
+		Vertex { position: [-1.0, -1.0] },
+		Vertex { position: [-1.0, 1.0] },
+		Vertex { position: [1.0, 1.0] },
+		Vertex { position: [-1.0, -1.0] },
+		Vertex { position: [1.0, -1.0] }
+	].to_vec();
 
 	let imageSize = 1024;
 	let image = StorageImage::new(device.clone(), Dimensions::Dim2d { width: imageSize, height: imageSize }, Format::R8G8B8A8Unorm, Some(queue.family())).unwrap();
 	let buffer = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, (0 .. imageSize * imageSize * 4).map(|_| 0u8)).expect("Failed to create Buffer.");
 
 	mod VertexShader { vulkano_shaders::shader!{ ty: "vertex", path: "src/shaders/SetPositionVertexShader.glsl" } }
-	mod FragmentShader { vulkano_shaders::shader!{ ty: "fragment", path: "src/shaders/ColorInsideFragmentShader.glsl" } }
+	mod FragmentShader { vulkano_shaders::shader!{ ty: "fragment", path: "src/shaders/MandelbrotFragmentShader.glsl" } }
 	let vertexShader = VertexShader::Shader::load(device.clone()).expect("Failed to load vertex shader.");
 	let fragmentShader = FragmentShader::Shader::load(device.clone()).expect("Failed to load fragment shader.");
 	let vertexBuffer = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, vertices.into_iter()).unwrap();
@@ -87,7 +92,7 @@ fn main() {
 
 	let mut builder = AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), queue.family()).unwrap();
 	builder
-		.begin_render_pass(framebuffer.clone(), false, vec![[0.0, 1.0, 0.0, 1.0].into()]).unwrap()
+		.begin_render_pass(framebuffer.clone(), false, vec![[1.0, 1.0, 1.0, 0.0].into()]).unwrap()
 		.draw(pipeline.clone(), &dynamicState, vertexBuffer.clone(), (), ()).unwrap()
 		.end_render_pass().unwrap()
 		.copy_image_to_buffer(image.clone(), buffer.clone()).unwrap();
@@ -95,5 +100,5 @@ fn main() {
 
 	let bufferContent = buffer.read().unwrap();
 	let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &bufferContent[..]).unwrap();
-	image.save("output/TriangleTest.png").unwrap();
+	image.save("output/GraphicsMandelbrot.png").unwrap();
 }
