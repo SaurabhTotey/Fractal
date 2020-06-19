@@ -76,23 +76,17 @@ fn main() {
 	};
 
 	let pipeline = Arc::new(GraphicsPipeline::start()
-		// Defines what kind of vertex input is expected.
 		.vertex_input_single_buffer::<Vertex>()
-		// The vertex shader.
 		.vertex_shader(vertexShader.main_entry_point(), ())
-		// Defines the viewport (explanations below).
 		.viewports_dynamic_scissors_irrelevant(1)
-		// The fragment shader.
 		.fragment_shader(fragmentShader.main_entry_point(), ())
-		// This graphics pipeline object concerns the first pass of the render pass.
 		.render_pass(Subpass::from(renderPass.clone(), 0).unwrap())
-		// Now that everything is specified, we call `build`.
 		.build(device.clone())
 		.unwrap());
 
 	let mut builder = AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), queue.family()).unwrap();
 	builder
-		.begin_render_pass(framebuffer.clone(), false, vec![[1.0, 1.0, 1.0, 0.0].into()]).unwrap()
+		.begin_render_pass(framebuffer.clone(), false, vec![[0.0, 0.0, 0.0, 0.0].into()]).unwrap()
 		.draw(pipeline.clone(), &dynamicState, vertexBuffer.clone(), (), ()).unwrap()
 		.end_render_pass().unwrap()
 		.copy_image_to_buffer(image.clone(), buffer.clone()).unwrap();
