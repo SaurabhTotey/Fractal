@@ -34,7 +34,7 @@ fn main() {
 	}
 	vulkano::impl_vertex!(Vertex, position);
 
-	// Vertices correspond to two triangles (one for each half of the screen); both triangles cover entire screen
+	// Vertices define a centered equilateral triangle
 	let vertices: Vec<Vertex> = [
 		Vertex { position: [ 0.5,  1f32 / 3f32.sqrt() / 2f32] },
 		Vertex { position: [-0.5,  1f32 / 3f32.sqrt() / 2f32] },
