@@ -36,9 +36,9 @@ fn main() {
 
 	// Vertices correspond to two triangles (one for each half of the screen); both triangles cover entire screen
 	let vertices: Vec<Vertex> = [
-		Vertex { position: [0.5, 0.5] },
-		Vertex { position: [-0.5, 0.5] },
-		Vertex { position: [0.0, 0.5 - 3f32.sqrt() / 2f32] }
+		Vertex { position: [ 0.5,  1f32 / 3f32.sqrt() / 2f32] },
+		Vertex { position: [-0.5,  1f32 / 3f32.sqrt() / 2f32] },
+		Vertex { position: [ 0.0, -1f32 / 3f32.sqrt()       ] }
 	].to_vec();
 
 	let imageSize = 1024;
