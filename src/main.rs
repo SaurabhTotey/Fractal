@@ -46,7 +46,7 @@ fn main() {
 	let buffer = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, (0 .. imageSize * imageSize * 4).map(|_| 0u8)).expect("Failed to create Buffer.");
 
 	mod VertexShader { vulkano_shaders::shader!{ ty: "vertex", path: "src/shaders/SetPositionVertexShader.glsl" } }
-	mod GeometryShader { vulkano_shaders::shader!{ ty: "geometry", path: "src/shaders/KochSnowflakeVertexGenerator.glsl" } }
+	mod GeometryShader { vulkano_shaders::shader!{ ty: "geometry", path: "src/shaders/PseudoKochSnowflakeVertexGenerator.glsl" } }
 	mod FragmentShader { vulkano_shaders::shader!{ ty: "fragment", path: "src/shaders/FillWhiteFragmentShader.glsl" } }
 
 	let vertexShader = VertexShader::Shader::load(device.clone()).expect("Failed to load vertex shader.");
@@ -98,5 +98,5 @@ fn main() {
 
 	let bufferContent = buffer.read().unwrap();
 	let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &bufferContent[..]).unwrap();
-	image.save("output/GraphicsKoch.png").unwrap();
+	image.save("output/GraphicsPseudoKoch.png").unwrap();
 }

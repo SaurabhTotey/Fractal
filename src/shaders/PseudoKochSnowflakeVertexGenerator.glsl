@@ -3,7 +3,7 @@
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 256) out;
 
-const int ITERATIONS = 3;
+const int ITERATIONS = 4;
 
 const float ROTATION = -3.14159265358 / 3.0;
 const int M = 3 * int(pow(2, ITERATIONS - 1)); // M is the max number of triangles possibly generated in a single iteration
