@@ -19,7 +19,10 @@ fn main() {
 	let queueFamily = physicalDevice.queue_families().find(|&q| q.supports_graphics()).expect("Couldn't find a graphical queue family.");
 	let (device, mut queues) = { Device::new(
 		physicalDevice,
-		&Features::none(),
+		&Features {
+			geometry_shader: true,
+			.. Features::none()
+		},
 		&DeviceExtensions{khr_storage_buffer_storage_class:true, ..DeviceExtensions::none()},
 		[(queueFamily, 0.5)].iter().cloned()
 	).expect("Failed to create device.") };
@@ -43,8 +46,11 @@ fn main() {
 	let buffer = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, (0 .. imageSize * imageSize * 4).map(|_| 0u8)).expect("Failed to create Buffer.");
 
 	mod VertexShader { vulkano_shaders::shader!{ ty: "vertex", path: "src/shaders/SetPositionVertexShader.glsl" } }
+	mod GeometryShader { vulkano_shaders::shader!{ ty: "geometry", path: "src/shaders/KochSnowflakeVertexGenerator.glsl" } }
 	mod FragmentShader { vulkano_shaders::shader!{ ty: "fragment", path: "src/shaders/FillWhiteFragmentShader.glsl" } }
+
 	let vertexShader = VertexShader::Shader::load(device.clone()).expect("Failed to load vertex shader.");
+	let geometryShader = GeometryShader::Shader::load(device.clone()).expect("Failed to load geometry shader.");
 	let fragmentShader = FragmentShader::Shader::load(device.clone()).expect("Failed to load fragment shader.");
 	let vertexBuffer = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, vertices.into_iter()).unwrap();
 	let renderPass = Arc::new(vulkano::single_pass_renderpass!(device.clone(),
@@ -76,6 +82,7 @@ fn main() {
 		.vertex_input_single_buffer::<Vertex>()
 		.vertex_shader(vertexShader.main_entry_point(), ())
 		.viewports_dynamic_scissors_irrelevant(1)
+		.geometry_shader(geometryShader.main_entry_point(), ())
 		.fragment_shader(fragmentShader.main_entry_point(), ())
 		.render_pass(Subpass::from(renderPass.clone(), 0).unwrap())
 		.build(device.clone())
