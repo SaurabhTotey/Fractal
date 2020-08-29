@@ -9,7 +9,5 @@ edition = "2018"
 [dependencies]
 vulkano = "0.19.0"
 vulkano-shaders = "0.19.0"
-image = "0.23.5"
-rand = "0.7.3"
 vulkano-win = "0.19"
 winit = "0.22"

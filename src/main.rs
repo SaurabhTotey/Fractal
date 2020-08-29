@@ -7,10 +7,8 @@ use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBuffer, DynamicState};
 use vulkano::sync::GpuFuture;
 use vulkano::pipeline::GraphicsPipeline;
-use vulkano::image::{StorageImage, Dimensions};
 use vulkano::format::Format;
 use vulkano::framebuffer::{Framebuffer, Subpass};
-use image::{Rgba, ImageBuffer};
 use vulkano::pipeline::viewport::Viewport;
 
 fn main() {
@@ -41,9 +39,7 @@ fn main() {
 		Vertex { position: [ 0.0, -1f32 / 3f32.sqrt()       ] }
 	].to_vec();
 
-	let imageSize = 1024;
-	let image = StorageImage::new(device.clone(), Dimensions::Dim2d { width: imageSize, height: imageSize }, Format::R8G8B8A8Unorm, Some(queue.family())).unwrap();
-	let buffer = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, (0 .. imageSize * imageSize * 4).map(|_| 0u8)).expect("Failed to create Buffer.");
+	let buffer = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, (0 .. 1024 * 1024 * 4).map(|_| 0u8)).expect("Failed to create Buffer.");
 
 	mod VertexShader { vulkano_shaders::shader!{ ty: "vertex", path: "src/shaders/SetPositionVertexShader.glsl" } }
 	mod GeometryShader { vulkano_shaders::shader!{ ty: "geometry", path: "src/shaders/PseudoKochSnowflakeVertexGenerator.glsl" } }
@@ -67,12 +63,12 @@ fn main() {
 	        depth_stencil: {}
 	    }
 	).unwrap());
-	let framebuffer = Arc::new(Framebuffer::start(renderPass.clone()).add(image.clone()).unwrap().build().unwrap());
+	let framebuffer = Arc::new(Framebuffer::start(renderPass.clone()).build().unwrap());
 
 	let dynamicState = DynamicState {
 		viewports: Some(vec![Viewport {
 			origin: [0.0, 0.0],
-			dimensions: [imageSize as f32, imageSize as f32],
+			dimensions: [1024f32, 1024f32],
 			depth_range: 0.0 .. 1.0,
 		}]),
 		.. DynamicState::none()
@@ -92,11 +88,8 @@ fn main() {
 	builder
 		.begin_render_pass(framebuffer.clone(), false, vec![[0.0, 0.0, 0.0, 1.0].into()]).unwrap()
 		.draw(pipeline.clone(), &dynamicState, vertexBuffer.clone(), (), ()).unwrap()
-		.end_render_pass().unwrap()
-		.copy_image_to_buffer(image.clone(), buffer.clone()).unwrap();
+		.end_render_pass().unwrap();
 	builder.build().unwrap().execute(queue.clone()).unwrap().then_signal_fence_and_flush().unwrap().wait(None).unwrap();
 
 	let bufferContent = buffer.read().unwrap();
-	let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &bufferContent[..]).unwrap();
-	image.save("output/GraphicsPseudoKoch.png").unwrap();
 }
