@@ -15,6 +15,7 @@ use winit::window::{WindowBuilder, Window};
 use winit::event::{Event, WindowEvent};
 use vulkano::swapchain::{Swapchain, SurfaceTransform, PresentMode, FullscreenExclusive, ColorSpace, acquire_next_image};
 use vulkano::image::{ImageUsage, SwapchainImage};
+use winit::dpi::PhysicalSize;
 
 fn main() {
 	let instance = Instance::new(None, &vulkano_win::required_extensions(), None)
@@ -23,7 +24,10 @@ fn main() {
 		.expect("No physical device available.");
 
 	let eventsLoop = EventLoop::new();
-	let surface = WindowBuilder::new().build_vk_surface(&eventsLoop, instance.clone()).unwrap();
+	let surface = WindowBuilder::new()
+		.with_title("Pseudo Koch Snowflake")
+		.with_inner_size(PhysicalSize::new(1024, 1024))
+		.build_vk_surface(&eventsLoop, instance.clone()).unwrap();
 	let surfaceCapabilities = surface.capabilities(physicalDevice)
 		.expect("Cannot get window surface capabilities.");
 
