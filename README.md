@@ -1,3 +1,3 @@
 # Fractal
-A small project for me to learn Vulkan and Rust. Can be ignored because this is me just mostly figuring things out and following tutorials.
+A small project for me to learn Vulkan and Rust.
 ![Mandelbrot Set Image](output/ComputeMandelbrot.png)
